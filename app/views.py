@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 from app import app
 
-import jwt, datetime, uuid
+import jwt, datetime, uuid, zmq
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
@@ -9,7 +9,13 @@ from functools import wraps
 from app.models import User
 from app.models import Entry
 
+# DB
 from app import db
+
+# ZMQ setup
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+socket.connect(Config.web_controller_conn_str)
 
 # Token auth verification function
 def token_required(f):
@@ -39,6 +45,33 @@ def entry_bundle(current_user):
     bundle = Entry.query.all()  
     return jsonify(bundle), 200
 
+@app.route('/update', methods=['POST'])
+@token_required
+def update_config(current_user):
+
+    status = {
+        "temp" : "0.0",
+        "tempUnits" : "C",
+        "humidity" : "0.0",
+        "elapsed" : "0",
+        "mode" : "off",
+        "fan_state" : "on",
+        "light_state" : "on",
+        "pump_state" : "off",
+    }
+
+    status["mode"] = request.form["mode"]
+    status["temp"] = float(request.form["temp"])
+    status["tempUnits"] = float(request.form["tempUnits"])
+    status["humidity"] = float(request.form["humidity"])
+    status["elapsed"] = float(request.form["elapsed"]) 
+    status["fan_state"] = request.form["fan_state"] 
+    status["light_state"] = request.form["light_state"]
+    status["pump_state"] = request.form["pump_state"]
+
+    socket.send(status)
+    return jsonify({'message' : 'Config updated!'}), 200
+
 @app.route('/login', methods=['GET'])
 def login():
 
@@ -67,4 +100,4 @@ def create_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message' : 'New user created!'})
+    return jsonify({'message' : 'New user created!'}), 201
