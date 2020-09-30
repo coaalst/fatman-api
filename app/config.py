@@ -3,7 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     # DB
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+    SQLALCHEMY_DATABASE_URI = os.environ.get('USER_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'fatman.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'fatcat'

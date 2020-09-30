@@ -1,4 +1,5 @@
 from flask import request, jsonify, make_response
+import requests
 from app import app
 
 import jwt, datetime, uuid, zmq, json
@@ -7,7 +8,6 @@ from functools import wraps
 
 # Models
 from app.models import User
-from app.models import Entry
 
 # DB
 from app import db
@@ -38,15 +38,9 @@ def token_required(f):
 
     return decorated
 
-@app.route('/')
-@token_required
-def entry_bundle(current_user):
-
-    bundle = Entry.query.all()  
-    return jsonify(bundle), 200
 
 @app.route('/update', methods=['POST'])
-#@token_required
+@token_required
 def update_config():
 
     status = {
@@ -72,6 +66,7 @@ def update_config():
     socket.send_json(json.dumps(status))
     return jsonify({'message' : 'Config updated!'}), 200
 
+# Token creation
 @app.route('/login', methods=['GET'])
 def login():
 
@@ -89,6 +84,22 @@ def login():
         return jsonify({'token' : token.decode('UTF-8')})
 
     return make_response('Error, user not found', 401, {'WWW-Authenticate' : 'Basic realm="Login failed!"'})
+
+# Fetching entries
+@app.route('/fetch', methods=['GET'])
+@token_required
+def fetch_data(period):
+
+    response = requests.get("http://127.0.0.1:5001/")
+    return response.text
+
+# Fetching entry
+@app.route('/fetch_month', methods=['GET'])
+@token_required
+def fetch_data_month(period):
+
+    response = requests.get("http://127.0.0.1:5001/month")
+    return response.text
 
 @app.route('/user', methods=['POST'])
 def create_user():
