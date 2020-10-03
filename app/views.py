@@ -6,6 +6,8 @@ import jwt, datetime, uuid, zmq, json
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
+from flask_cors import cross_origin
+
 # Models
 from app.models import User
 
@@ -41,6 +43,7 @@ def token_required(f):
 
 @app.route('/update', methods=['POST'])
 @token_required
+@cross_origin(supports_credentials=True)
 def update_config():
 
     status = {
@@ -68,6 +71,7 @@ def update_config():
 
 # Token creation
 @app.route('/login', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def login():
 
     auth = request.authorization
@@ -88,6 +92,7 @@ def login():
 # Fetching entries
 @app.route('/fetch', methods=['GET'])
 @token_required
+@cross_origin(supports_credentials=True)
 def fetch_data(period):
 
     response = requests.get("http://127.0.0.1:5001/")
@@ -96,6 +101,7 @@ def fetch_data(period):
 # Fetching entry
 @app.route('/fetch_month', methods=['GET'])
 @token_required
+@cross_origin(supports_credentials=True)
 def fetch_data_month(period):
 
     response = requests.get("http://127.0.0.1:5001/month")
