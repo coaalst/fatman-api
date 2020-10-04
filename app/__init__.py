@@ -5,8 +5,12 @@ from flask_cors import CORS
 
 # Init app
 app = Flask(__name__)
-CORS(app, support_credentials=True)
 app.config.from_object(Config)
+
+cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 db = SQLAlchemy(app)
+
 
 from app import views

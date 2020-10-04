@@ -19,55 +19,42 @@ context = zmq.Context()
 socket = context.socket(zmq.PUSH)
 socket.connect("tcp://127.0.0.1:2000")
 
-# Token auth verification function
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
+@app.route('/update', methods=['GET'])
+@cross_origin()
 
-        if not token:
-            return jsonify({'message' : 'Token not found!'}), 401
-
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'])
-            current_user = User.query.filter_by(username = data['public']).first
-        except:
-            return jsonify({'message' : 'Token is invalid!'}), 401
-
-        return f(current_user, *args, **kwargs)
-
-    return decorated
-
-
-@app.route('/update', methods=['POST'])
-@token_required
-@cross_origin(supports_credentials=True)
 def update_config():
+    token = None
+    if 'x-access-token' in request.headers:
+        token = request.headers['x-access-token']
+    if not token:
+        return jsonify({'message' : 'Token not found!'}), 401
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'])
+        current_user = User.query.filter_by(username = data['public']).first
+    except:
+        return jsonify({'message' : 'Token is invalid!'}), 401
 
-    status = {
-        "temp" : "0.0",
-        "tempUnits" : "C",
-        "humidity" : "0.0",
-        "elapsed" : "0",
-        "mode" : "off",
-        "fan_state" : "on",
-        "light_state" : "on",
-        "pump_state" : "off",
+    conf_update = {
+	    "mode": "off",
+	    "temp": 26,
+	    "humidity": 40,
+	    "interval_start": "11:00",
+	    "interval_stop": "23:00",
+	    "fan_state": "off",
+	    "light_state": "off",
+	    "pump_state": "off"
     }
-
-    status["mode"] = request.form["mode"]
-    status["temp"] = float(request.form["temp"])
-    status["tempUnits"] = request.form["tempUnits"]
-    status["humidity"] = float(request.form["humidity"])
-    status["elapsed"] = float(request.form["elapsed"]) 
-    status["fan_state"] = request.form["fan_state"] 
-    status["light_state"] = request.form["light_state"]
-    status["pump_state"] = request.form["pump_state"]
-
-    socket.send_json(json.dumps(status))
+    conf_update["mode"] = request.form["mode"]
+    conf_update["temp"] = request.form["temp"]
+    conf_update["humidity"] = request.form["humidity"]
+    conf_update["interval_start"] = request.form["minterval_startode"]
+    conf_update["interval_stop"] = request.form["interval_stop"]
+    conf_update["fan_state"] = request.form["fan_state"]
+    conf_update["light_state"] = request.form["light_state"]
+    conf_update["pump_state"] = request.form["pump_state"]
+    #socket.send_json(json.dumps(conf_update))
     return jsonify({'message' : 'Config updated!'}), 200
+
 
 # Token creation
 @app.route('/login', methods=['GET'])
@@ -91,7 +78,6 @@ def login():
 
 # Fetching entries
 @app.route('/fetch', methods=['GET'])
-@token_required
 @cross_origin(supports_credentials=True)
 def fetch_data(period):
 
@@ -100,7 +86,6 @@ def fetch_data(period):
 
 # Fetching entry
 @app.route('/fetch_month', methods=['GET'])
-@token_required
 @cross_origin(supports_credentials=True)
 def fetch_data_month(period):
 
