@@ -111,6 +111,24 @@ def fetch_data_month():
     response = requests.get("http://127.0.0.1:5001/month")
     return response.text
 
+# Fetching entry
+@app.route('/fetch_screenshot', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def fetch_screenshot():
+    token = None
+    if 'x-access-token' in request.headers:
+        token = request.headers['x-access-token']
+    if not token:
+        return jsonify({'message' : 'Token not found!'}), 401
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'])
+        current_user = User.query.filter_by(username = data['public']).first
+    except:
+        return jsonify({'message' : 'Token is invalid!'}), 401
+
+    response = requests.get("http://127.0.0.1:5002/month")
+    return jsonify(response)
+
 @app.route('/user', methods=['POST'])
 def create_user():
     token = None
