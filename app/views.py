@@ -126,7 +126,7 @@ def fetch_screenshot():
     except:
         return jsonify({'message' : 'Token is invalid!'}), 401
 
-    response = requests.get("http://127.0.0.1:5002/month")
+    response = requests.get("http://127.0.0.1:5002/")
     return jsonify(response)
 
 @app.route('/user', methods=['POST'])
